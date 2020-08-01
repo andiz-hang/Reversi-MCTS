@@ -1,0 +1,1 @@
+This is an AI Reversi that uses Monte-Carlo Tree Search to play
