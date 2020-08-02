@@ -20,16 +20,20 @@ int strToCell(string str) {
 }
 
 int playerMove(Board b) {
-    b.printBoard();
+    b.printBoard(0);
 
     string move = "";
     int cell = -1;
 
+    auto a_moves = b.availableMoves(0);
+    if (a_moves.size() == 0) {
+        cout << "No available moves. Passing to your opponent";
+        return -1;
+    }
+
     cout << "Enter your move: ";
     cin >> move;
     cell = strToCell(move);
-
-    auto a_moves = b.availableMoves();
 
     bool is_available = false;
     for (int i = 0; i < a_moves.size(); i++) {
@@ -54,9 +58,9 @@ int playerMove(Board b) {
 }
 
 void printWhoWon(Board b) {
-    b.printBoard();
+    b.printBoard(0);
 
-    auto gamestate = b.checkVictory();
+    auto gamestate = b.checkVictory(0);
 
     if (gamestate == 0) {
         cout << "The O player has won!\n";
@@ -67,51 +71,44 @@ void printWhoWon(Board b) {
     }
 }
 
-void startHumanGame() {
+void startGame(bool is_human_game) {
+    // Generate a new seed for random
+    srand(time(NULL));
+
     Board b;
 
     int gamestate = -1;
+    int pass_counter = 0;
 
     while (gamestate == -1) {
+        int p_move;
+        if (is_human_game) {
+            p_move = playerMove(b);
+        } else {
+            p_move = AITurn(b, 0);
+        }
 
-        auto p_move = playerMove(b);
-        b.action(p_move, 0);
+        if (p_move == -1) {
+            pass_counter += 1;
+        } else {
+            b.action(p_move, 0);
+            pass_counter = 0;
+        }
 
-        gamestate = b.checkVictory();
+        gamestate = b.checkVictory(pass_counter);
         if (gamestate != -1) {
             break;
         }
 
-        auto c_move = AITurn(b);
-        b.action(c_move, 1);
-
-        gamestate = b.checkVictory();
-    }
-
-    printWhoWon(b);
-}
-
-void startAIGame() {
-    Board b;
-
-    int gamestate = -1;
-
-    while (gamestate == -1) {
-
-        auto p_move = AITurn(b);
-        b.action(p_move, 0);
-        b.printBoard();
-
-        gamestate = b.checkVictory();
-        if (gamestate != -1) {
-            break;
+        auto c_move = AITurn(b, 1);
+        if (c_move == -1) {
+            pass_counter += 1;
+        } else {
+            b.action(c_move, 1);
+            pass_counter = 0;
         }
 
-        auto c_move = AITurn(b);
-        b.action(c_move, 1);
-        b.printBoard();
-
-        gamestate = b.checkVictory();
+        gamestate = b.checkVictory(pass_counter);
     }
 
     printWhoWon(b);

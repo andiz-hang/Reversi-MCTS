@@ -4,6 +4,8 @@
 
 using namespace std;
 
+enum Direction {N = -8, E = 1, S = 8, W = -1, NE = N + E, SE = S + E, SW = S + W, NW = N + W};
+
 class Board {
 private:
     /*
@@ -20,7 +22,7 @@ private:
     // which colour each space is
     bool colour_board[64] = {0};
 
-    void printRow(int row) {
+    void printRow(int row, bool player) {
         switch(row){
             case 0: cout << "A|"; break;
             case 1: cout << "B|"; break;
@@ -33,7 +35,7 @@ private:
         }
         for (int i = 8*row; i < 8*row+8; i++) {
 
-            auto available_moves = availableMoves();
+            auto available_moves = availableMoves(player);
             bool is_available = false;
             for (int j = 0; j < available_moves.size(); j++) {
                 if (i == available_moves[j]) {
@@ -76,24 +78,6 @@ private:
         cout << "---|\n";
     }
 
-    string numberToGrid(int num) {
-        string res = "";
-        int mod = num % 8;
-
-        switch (num / 8) {
-            case 0: res += "A"; break;
-            case 1: res += "B"; break;
-            case 2: res += "C"; break;
-            case 3: res += "D"; break;
-            case 4: res += "E"; break;
-            case 5: res += "F"; break;
-            case 6: res += "G"; break;
-            case 7: res += "H"; break;
-        }
-
-        return res += to_string(mod);
-    }
-
     bool isGridFull() {
         for (int i = 0; i < 64; i++) {
             if (!occupied_board[i]) {
@@ -104,158 +88,221 @@ private:
         return true;
     }
 
+    // N = -8
+    // S = +8
+    // E = +1
+    // W = -1
+    int findInDirection(bool player, int starting_cell, Direction d) {
+        for (int i = starting_cell + d; i >= 0 && i <= 63; i += d) {
+            if (!occupied_board[i]) {
+                return -1;
+            }
+
+            int prev = i - d;
+            int i_col = i % 8;
+            int prev_col = prev % 8;
+
+            if ((prev_col == 0 && i_col == 7) || (prev_col == 7 && i_col == 0)) {
+                return -1;
+            }
+
+            if (colour_board[i] == player) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    // If the ending_cell is -1, do nothing
+    void flipPiecesInDirection(bool player, int starting_cell, int ending_cell, Direction d) {
+        if (ending_cell == -1) {
+            return;
+        }
+
+        for (int i = starting_cell + d; i != ending_cell; i += d) {
+            colour_board[i] = player;
+        }
+    }
+
+    // Flip the pieces in 8 directions 
     void flip_pieces(bool player, int cell) {
-        // N
-        for (int i = cell - 8; i >= 0; i -= 8) {
 
-            // Stop if the cell is unoccupied
-            if (!occupied_board[i]) {
-                break;
-            }
+        int end_cell = findInDirection(player, cell, N);
+        flipPiecesInDirection(player, cell, end_cell, N);
+        
+        end_cell = findInDirection(player, cell, NE);
+        flipPiecesInDirection(player, cell, end_cell, NE);
+        
+        end_cell = findInDirection(player, cell, E);
+        flipPiecesInDirection(player, cell, end_cell, E);
+        
+        end_cell = findInDirection(player, cell, SE);
+        flipPiecesInDirection(player, cell, end_cell, SE);
+        
+        end_cell = findInDirection(player, cell, S);
+        flipPiecesInDirection(player, cell, end_cell, S);
+        
+        end_cell = findInDirection(player, cell, SW);
+        flipPiecesInDirection(player, cell, end_cell, SW);
+        
+        end_cell = findInDirection(player, cell, W);
+        flipPiecesInDirection(player, cell, end_cell, W);
+        
+        end_cell = findInDirection(player, cell, NW);
+        flipPiecesInDirection(player, cell, end_cell, NW);
 
-            if (colour_board[i] == player) {
-                for (int j = i + 8; j < cell; j += 8) {
-                    setCell(j, player);
-                }
-                break;
-            }
-        }
+        // // N
+        // for (int i = cell - 8; i >= 0; i -= 8) {
 
-        // NE
-        if (cell % 8 != 7) {
-            for (int i = cell - 7; i >= 0; i -= 7) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //     // Stop if the cell is unoccupied
+        //     if (!occupied_board[i]) {
+        //         break;
+        //     }
 
-                if (colour_board[i] == player) {
-                    for (int j = i + 7; j < cell; j += 7) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //     if (colour_board[i] == player) {
+        //         for (int j = i + 8; j < cell; j += 8) {
+        //             setCell(j, player);
+        //         }
+        //         break;
+        //     }
+        // }
 
-                if (i % 8 == 7) {
-                    break;
-                }
-            }
-        }
+        // // NE
+        // if (cell % 8 != 7) {
+        //     for (int i = cell - 7; i >= 0; i -= 7) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
 
-        // E
-        if (cell % 8 != 7) {
-            for (int i = cell + 1; ; i += 1) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //         if (colour_board[i] == player) {
+        //             for (int j = i + 7; j < cell; j += 7) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
 
-                if (colour_board[i] == player) {
-                    for (int j = i - 1; j > cell; j -= 1) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //         if (i % 8 == 7) {
+        //             break;
+        //         }
+        //     }
+        // }
 
-                if (i % 8 == 7) {
-                    break;
-                }
-            }
-        }
+        // // E
+        // if (cell % 8 != 7) {
+        //     for (int i = cell + 1; ; i += 1) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
 
-        // SE
-        if (cell % 8 != 7) {
-            for (int i = cell + 9; i <= 63; i += 9) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //         if (colour_board[i] == player) {
+        //             for (int j = i - 1; j > cell; j -= 1) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
 
-                if (colour_board[i] == player) {
-                    for (int j = i - 9; j > cell; j -= 9) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //         if (i % 8 == 7) {
+        //             break;
+        //         }
+        //     }
+        // }
 
-                if (i % 8 == 7) {
-                    break;
-                }
-            }
-        }
+        // // SE
+        // if (cell % 8 != 7) {
+        //     for (int i = cell + 9; i <= 63; i += 9) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
 
-        // S
-        for (int i = cell + 8; i <= 63; i += 8) {
+        //         if (colour_board[i] == player) {
+        //             for (int j = i - 9; j > cell; j -= 9) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
 
-            // Stop if the cell is unoccupied
-            if (!occupied_board[i]) {
-                break;
-            }
+        //         if (i % 8 == 7) {
+        //             break;
+        //         }
+        //     }
+        // }
 
-            if (colour_board[i] == player) {
-                for (int j = i - 8; j > cell; j -= 8) {
-                    setCell(j, player);
-                }
-                break;
-            }
-        }
+        // // S
+        // for (int i = cell + 8; i <= 63; i += 8) {
 
-        // SW
-        if (cell % 8 != 0) {
-            for (int i = cell + 7; i <= 63; i += 7) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //     // Stop if the cell is unoccupied
+        //     if (!occupied_board[i]) {
+        //         break;
+        //     }
 
-                if (colour_board[i] == player) {
-                    for (int j = i - 7; j > cell; j -= 7) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //     if (colour_board[i] == player) {
+        //         for (int j = i - 8; j > cell; j -= 8) {
+        //             setCell(j, player);
+        //         }
+        //         break;
+        //     }
+        // }
 
-                if (i % 8 == 0) {
-                    break;
-                }
-            }
-        }
+        // // SW
+        // if (cell % 8 != 0) {
+        //     for (int i = cell + 7; i <= 63; i += 7) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
 
-        // W
-        if (cell % 8 != 0) {
-            for (int i = cell - 1;; i -= 1) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //         if (colour_board[i] == player) {
+        //             for (int j = i - 7; j > cell; j -= 7) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
 
-                if (colour_board[i] == player) {
-                    for (int j = i + 1; j < cell; j += 1) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //         if (i % 8 == 0) {
+        //             break;
+        //         }
+        //     }
+        // }
 
-                if (i % 8 == 0) {
-                    break;
-                }
-            }
-        }
+        // // W
+        // if (cell % 8 != 0) {
+        //     for (int i = cell - 1;; i -= 1) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
 
-        // NW
-        if (cell % 8 != 0) {
-            for (int i = cell - 9; i >= 0; i -= 9) {
-                if (!occupied_board[i]) {
-                    break;
-                }
+        //         if (colour_board[i] == player) {
+        //             for (int j = i + 1; j < cell; j += 1) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
 
-                if (colour_board[i] == player) {
-                    for (int j = i + 9; j < cell; j += 9) {
-                        setCell(j, player);
-                    }
-                    break;
-                }
+        //         if (i % 8 == 0) {
+        //             break;
+        //         }
+        //     }
+        // }
 
-                if (i % 8 == 0) {
-                    break;
-                }
-            }
-        }
+        // // NW
+        // if (cell % 8 != 0) {
+        //     for (int i = cell - 9; i >= 0; i -= 9) {
+        //         if (!occupied_board[i]) {
+        //             break;
+        //         }
+
+        //         if (colour_board[i] == player) {
+        //             for (int j = i + 9; j < cell; j += 9) {
+        //                 setCell(j, player);
+        //             }
+        //             break;
+        //         }
+
+        //         if (i % 8 == 0) {
+        //             break;
+        //         }
+        //     }
+        // }
     }
 
     void setCell(int row, int col, bool colour) {
@@ -286,16 +333,17 @@ public:
         setCell(4, 4, 0);
     }
 
-    void printBoard() {
+    void printBoard(bool player) {
         printColNames();
         printHorizontalSeparator();
         for (int i = 0; i < 8; i++) {
-            printRow(i);
+            printRow(i, player);
             printHorizontalSeparator();
         }
     }
 
-    vector<int> availableMoves() {
+    // A move must capture a cell
+    vector<int> availableMoves(bool player) {
         vector<int> res = {};
 
         for (int i = 0; i < 64; i++) {
@@ -303,49 +351,58 @@ public:
                 continue;
             }
 
-            // Check up
-            if (i >= 8 && occupied_board[i-8]) {
+            Direction d = N;
+            auto cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check down
-            if (i <= 55 && occupied_board[i+8]) {
+            d = NE;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check left
-            if (i % 8 != 0 && occupied_board[i-1]) {
+            d = E;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check right
-            if (i % 8 != 7 && occupied_board[i+1]) {
+            d = SE;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check NW
-            if (i % 8 != 0 && i >= 8 && occupied_board[i-9]) {
-                res.push_back(i);
-                continue;
-            }
-            // Check NE
-            if (i % 8 != 7 && i >= 8 && occupied_board[i-7]) {
+            d = S;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check SE
-            if (i % 8 != 7 && i <= 55 && occupied_board[i+9]) {
+            d = SW;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
 
-            // Check SW
-            if (i % 8 != 0 && i <= 55 && occupied_board[i+7]) {
+            d = W;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
+                res.push_back(i);
+                continue;
+            }
+
+            d = NW;
+            cell = findInDirection(player, i, d);
+            if (cell != -1 && cell != i + d) {
                 res.push_back(i);
                 continue;
             }
@@ -354,8 +411,8 @@ public:
         return res;
     }
 
-    void printAvailableMoves() {
-        auto moves = availableMoves();
+    void printAvailableMoves(bool player) {
+        auto moves = availableMoves(player);
         cout << "Available Moves: ";
         for (int i = 0; i < moves.size(); i++) {
             auto gridName = numberToGrid(moves[i]);
@@ -364,15 +421,28 @@ public:
         cout << "\n";
     }
 
-    // If the game is not finished yet, return -1
-    // If player 0 wins, return 0
-    // If player 1 wins, return 1
-    // Ties return 2
-    int checkVictory() {
-        if (!isGridFull()) {
-            return -1;
+    string numberToGrid(int num) {
+        string res = "";
+        int mod = num % 8;
+
+        switch (num / 8) {
+            case 0: res += "A"; break;
+            case 1: res += "B"; break;
+            case 2: res += "C"; break;
+            case 3: res += "D"; break;
+            case 4: res += "E"; break;
+            case 5: res += "F"; break;
+            case 6: res += "G"; break;
+            case 7: res += "H"; break;
         }
 
+        return res += to_string(mod);
+    }
+
+    // If there are more Os, return 0
+    // If there are more Xs, return 1
+    // return 2 on ties
+    int countColours() {
         int zero_score = 0;
         int one_score = 0;
 
@@ -392,5 +462,15 @@ public:
         } else {
             return 2;
         }
+    }
+
+    // If the game is not finished yet, return -1
+    // Else return the victor, 2 on ties
+    int checkVictory(int passes) {
+        if (passes < 2 && !isGridFull()) {
+            return -1;
+        }
+
+        return countColours();
     }
 };

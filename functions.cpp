@@ -4,5 +4,6 @@
 using namespace std;
 
 int main() {
-    startAIGame();
+    bool is_human_game = false;
+    startGame(is_human_game);
 }
