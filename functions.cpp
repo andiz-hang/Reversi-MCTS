@@ -16,5 +16,5 @@ const bool ADVANCED_AI1 = true;
 const bool ADVANCED_AI2 = true;
 
 int main() {
-    startGame(IS_HUMAN_GAME, HARD_AI1, HARD_AI2);
+    startGame(IS_HUMAN_GAME, ADVANCED_AI1, ADVANCED_AI2);
 }
