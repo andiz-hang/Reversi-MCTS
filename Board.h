@@ -6,6 +6,29 @@ using namespace std;
 
 enum Direction {N = -8, E = 1, S = 8, W = -1, NE = N + E, SE = S + E, SW = S + W, NW = N + W};
 
+struct Score {
+    int score0;
+    int score1;
+};
+
+string numberToGrid(int num) {
+    string res = "";
+    int mod = num % 8;
+
+    switch (num / 8) {
+        case 0: res += "A"; break;
+        case 1: res += "B"; break;
+        case 2: res += "C"; break;
+        case 3: res += "D"; break;
+        case 4: res += "E"; break;
+        case 5: res += "F"; break;
+        case 6: res += "G"; break;
+        case 7: res += "H"; break;
+    }
+
+    return res += to_string(mod);
+}
+
 class Board {
 private:
     /*
@@ -421,28 +444,8 @@ public:
         cout << "\n";
     }
 
-    string numberToGrid(int num) {
-        string res = "";
-        int mod = num % 8;
-
-        switch (num / 8) {
-            case 0: res += "A"; break;
-            case 1: res += "B"; break;
-            case 2: res += "C"; break;
-            case 3: res += "D"; break;
-            case 4: res += "E"; break;
-            case 5: res += "F"; break;
-            case 6: res += "G"; break;
-            case 7: res += "H"; break;
-        }
-
-        return res += to_string(mod);
-    }
-
-    // If there are more Os, return 0
-    // If there are more Xs, return 1
-    // return 2 on ties
-    int countColours() {
+    // Return both the number of Xs and Os on the board
+    Score getFinalScore() {
         int zero_score = 0;
         int one_score = 0;
 
@@ -455,9 +458,19 @@ public:
             }
         }
 
-        if (zero_score > one_score) {
+        Score result = { zero_score, one_score };
+        return result;
+    }
+
+    // If there are more Os, return 0
+    // If there are more Xs, return 1
+    // return 2 on ties
+    int countColours() {
+        Score res = getFinalScore();
+
+        if (res.score0 > res.score1) {
             return 0;
-        } else if (one_score > zero_score) {
+        } else if (res.score1 > res.score0) {
             return 1;
         } else {
             return 2;

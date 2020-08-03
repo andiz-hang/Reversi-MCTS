@@ -60,7 +60,12 @@ int playerMove(Board b) {
 void printWhoWon(Board b) {
     b.printBoard(0);
 
-    auto gamestate = b.checkVictory(0);
+    Score res = b.getFinalScore();
+
+    cout << "The score for O is: " << res.score0 << "\n";
+    cout << "The score for X is: " << res.score1 << "\n";
+
+    auto gamestate = b.countColours();
 
     if (gamestate == 0) {
         cout << "The O player has won!\n";
@@ -71,7 +76,7 @@ void printWhoWon(Board b) {
     }
 }
 
-void startGame(bool is_human_game) {
+void startGame(bool is_human_game, int ai0, int ai1) {
     // Generate a new seed for random
     srand(time(NULL));
 
@@ -85,7 +90,7 @@ void startGame(bool is_human_game) {
         if (is_human_game) {
             p_move = playerMove(b);
         } else {
-            p_move = AITurn(b, 0);
+            p_move = AIMove(b, 0, ai0);
         }
 
         if (p_move == -1) {
@@ -100,7 +105,7 @@ void startGame(bool is_human_game) {
             break;
         }
 
-        auto c_move = AITurn(b, 1);
+        auto c_move = AIMove(b, 1, ai1);
         if (c_move == -1) {
             pass_counter += 1;
         } else {
@@ -112,4 +117,5 @@ void startGame(bool is_human_game) {
     }
 
     printWhoWon(b);
+
 }
